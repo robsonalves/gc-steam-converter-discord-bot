@@ -32,7 +32,7 @@ async def on_message(message):
 
         # Mensagem formatada
         response = (
-            f"🎮🔹:bot **Comando Console:** ```connect {ip_port}; password {password}```"
+            f"🎮🔹ᐇ **Comando Console:** ```connect {ip_port}; password {password}```"
         )
         await message.channel.send(response)
 
