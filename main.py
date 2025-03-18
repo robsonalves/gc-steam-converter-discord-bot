@@ -1,8 +1,8 @@
+from flask import Flask, request, jsonify
 import os
 import re
 import requests
 import time
-from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 from threading import Timer
@@ -12,7 +12,11 @@ load_dotenv()
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
 app = Flask(__name__)
-CORS(app, resources={r"/send": {"origins": "*"}}) 
+CORS(app, resources={r"/send": {"origins": "*"}})
+
+# Configuração do logger
+import logging
+logging.basicConfig(level=logging.INFO)
 
 # Armazenamento temporário de IPs já enviados
 sent_ips = set()
@@ -21,7 +25,7 @@ def clear_sent_ips():
     """Função que limpa os IPs enviados a cada 1 hora."""
     global sent_ips
     sent_ips.clear()
-    print("🔄 Cache de IPs resetado.")
+    logging.info("🔄 Cache de IPs resetado.")
 
 # Agendar a limpeza a cada 1 hora
 def schedule_cache_reset():
@@ -32,7 +36,8 @@ schedule_cache_reset()  # Iniciar o primeiro agendamento
 def format_message(ip_port, password, timestamp):
     """Formata a mensagem no formato desejado para o Discord."""
     return {
-        "content": f"🎮🔹ᐇ **Console:** ```connect {ip_port}; password {password}```\n ⏳ **Expires:** <t:{timestamp}:R>"
+        "content": f"🎮🔹ᐇ **Console:** ```connect {ip_port}; password {password}```\n"
+                   f"⏳ **Expires:** <t:{timestamp}:R>"
     }
 
 @app.route("/send", methods=["POST"])
@@ -41,6 +46,10 @@ def send_to_discord():
     data = request.json
     if not data or "address" not in data:
         return jsonify({"error": "Formato inválido. Enviar JSON com {'address': 'IP:PORT/PASSWORD'}"}), 400
+
+    # Obter o endereço IP do solicitante
+    requester_ip = request.remote_addr
+    logging.info(f"Requisição recebida de IP: {requester_ip}")
 
     # Extrair IP, Porta e Senha usando regex
     match = re.search(r"([\d.]+:\d+)/(\w+)", data["address"])
@@ -52,6 +61,7 @@ def send_to_discord():
 
     # Verificar se já foi enviado
     if ip_port in sent_ips:
+        logging.info(f"🔄 IP já enviado: {ip_port}")
         return jsonify({"message": "IP já foi enviado anteriormente, ignorado."}), 200
 
     # Adicionar ao cache
