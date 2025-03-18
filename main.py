@@ -3,6 +3,7 @@ import re
 import requests
 import time
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from dotenv import load_dotenv
 from threading import Timer
 
@@ -11,6 +12,7 @@ load_dotenv()
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
 app = Flask(__name__)
+CORS(app, resources={r"/send": {"origins": "*"}}) 
 
 # Armazenamento temporário de IPs já enviados
 sent_ips = set()
