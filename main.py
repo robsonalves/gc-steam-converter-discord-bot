@@ -31,7 +31,7 @@ def clear_sent_ips():
 def schedule_cache_reset():
     Timer(3600, clear_sent_ips).start()  # 3600 segundos = 1 hora
 
-schedule_cache_reset()  # Iniciar o primeiro agendamento
+# schedule_cache_reset()  # Iniciar o primeiro agendamento
 
 def format_message(ip_port, password, timestamp):
     """Formata a mensagem no formato desejado para o Discord."""
