@@ -25,7 +25,7 @@ def clear_sent_ips():
     """Função que limpa os IPs enviados a cada 1 hora."""
     global sent_ips
     sent_ips.clear()
-    logging.info("🔄 Cache de IPs resetado.")
+    print("🔄 Cache de IPs resetado.")
 
 # Agendar a limpeza a cada 1 hora
 def schedule_cache_reset():
