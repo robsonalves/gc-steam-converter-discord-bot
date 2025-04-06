@@ -76,6 +76,7 @@ def send_to_discord():
     if response.status_code == 204:
         return jsonify({"message": "Mensagem enviada com sucesso!"}), 200
     else:
+        sent_ips.remove(ip_port)
         return jsonify({"error": "Falha ao enviar mensagem para o Discord"}), 500
 
 if __name__ == "__main__":
