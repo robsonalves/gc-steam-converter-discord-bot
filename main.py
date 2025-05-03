@@ -6,6 +6,16 @@ import time
 from flask_cors import CORS
 from dotenv import load_dotenv
 from threading import Timer
+import discord
+
+# Inicialização do bot Discord para leitura de mensagens
+TOKEN = os.getenv("DISCORD_TOKEN")
+
+intents = discord.Intents.default()
+intents.messages = True
+intents.message_content = True
+
+bot = discord.Client(intents=intents)
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -27,11 +37,16 @@ def clear_sent_ips():
     sent_ips.clear()
     print("🔄 Cache de IPs resetado.")
 
-# Agendar a limpeza a cada 1 hora
+# Agendar a limpeza a cada 30 minutos com Timer recursivo
 def schedule_cache_reset():
-    Timer(3600, clear_sent_ips).start()  # 3600 segundos = 1 hora
+    def reset():
+        if sent_ips:
+            clear_sent_ips()
+        schedule_cache_reset()  # reagenda após execução
+        print("🔄 Timer to cache cleanses.")
+    Timer(1800, reset).start()  # 1800 segundos = 30 minutos
 
-schedule_cache_reset()  # Iniciar o primeiro agendamento
+schedule_cache_reset()
 
 def format_message(ip_port, password, timestamp):
     """Formata a mensagem no formato desejado para o Discord."""
@@ -79,5 +94,25 @@ def send_to_discord():
         sent_ips.remove(ip_port)
         return jsonify({"error": "Falha ao enviar mensagem para o Discord"}), 500
 
+@bot.event
+async def on_ready():
+    print(f"✅ Bot conectado como {bot.user}")
+
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+
+    match = re.search(r"steam://connect/([\d.]+:\d+)/(\w+)", message.content)
+    if match:
+        ip_port = match.group(1)
+        password = match.group(2)
+        response = (
+            f"🎮🔹ᐇ **Comando Console:** ```connect {ip_port}; password {password}```"
+        )
+        await message.channel.send(response)
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    import threading
+    threading.Thread(target=lambda: app.run(host="0.0.0.0", port=5001, debug=True, use_reloader=False)).start()
+    bot.run(TOKEN)
